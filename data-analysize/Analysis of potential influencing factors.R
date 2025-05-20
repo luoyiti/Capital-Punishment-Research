@@ -77,7 +77,4 @@ ggplot(top_states, aes(x = reorder(Jurisdiction, Execution_Count), y = Execution
 chisq_test <- chisq.test(table(df$Political_Party))
 print(chisq_test)
 
-# 逻辑回归（示例：种族和政治倾向的影响）
-model <- glm(Outcome ~ Races + Political_Party, data = df, family = binomial)
-summary(model)
 
