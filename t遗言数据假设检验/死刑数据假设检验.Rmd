@@ -1,0 +1,172 @@
+---
+title: "死刑数据假设检验分析"
+author: "吴林洁"
+date: "2025-05-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 1. 读取数据
+
+```{r}
+
+
+df <- read.csv("D:\\HuaweiMoveData\\Users\\32549\\OneDrive\\大二下\\数据科学与数据分析\\小组作业\\死刑和遗言数据.csv",
+               stringsAsFactors = FALSE,
+               fileEncoding = "GBK")
+
+
+```
+
+## 2. 创建新变量：是否被执行死刑（execution 非空即为 1）
+```{r}
+
+df$executed <- ifelse(is.na(df$execution), 0, 1)
+
+```
+
+
+
+```{r}
+options(repos = c(CRAN = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
+install.packages("ggplot2") 
+library(ggplot2)
+
+```
+
+
+## 3. 基本特征分布统计 + 可视化
+```{r}
+
+cat("【性别分布】\n")
+print(table(df$gender))
+
+# 可视化：性别分布柱状图
+ggplot(data = df, aes(x = gender)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "性别分布", x = "性别", y = "人数") +
+  theme_minimal()
+
+
+# -------------------
+
+cat("\n【种族分布】\n")
+print(table(df$race))
+
+# 可视化：种族分布柱状图
+ggplot(data = df, aes(x = race)) +
+  geom_bar(fill = "darkorange") +
+  labs(title = "种族分布", x = "种族", y = "人数") +
+  theme_minimal()
+
+
+# -------------------
+
+cat("\n【前10个最多死刑的郡】\n")
+county_counts <- sort(table(df$county), decreasing = TRUE)[1:10]
+print(county_counts)
+
+# 构建前10县的数据框用于可视化
+df_county_top10 <- as.data.frame(county_counts)
+colnames(df_county_top10) <- c("county", "count")
+
+# 可视化：前10县份死刑人数
+ggplot(data = df_county_top10, aes(x = reorder(county, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "firebrick") +
+  labs(title = "前10个最多死刑的郡", x = "县份", y = "死刑人数") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+## 4. 与 executed（是否执行死刑）相关的卡方检验
+
+```{r}
+
+cat("\n【性别 vs 执行死刑】\n")
+table_gender <- table(df$gender, df$executed)
+print(chisq.test(table_gender))
+
+cat("\n【种族 vs 执行死刑】\n")
+table_race <- table(df$race, df$executed)
+print(chisq.test(table_race))
+
+cat("\n【县份 vs 执行死刑】\n")
+table_county <- table(df$county, df$executed)
+print(chisq.test(table_county))
+
+cat("\n【前科 vs 执行死刑】\n")
+table_prior <- table(df$`prior.prison.record.0.1.`, df$executed)
+print(chisq.test(table_prior))
+```
+
+##5. 与 prior.prison.record.0.1.（前科）相关的卡方检验
+
+```{r}
+
+cat("\n【性别 vs 是否有前科】\n")
+table_gender_prison <- table(df$gender, df$`prior.prison.record.0.1.`)
+print(chisq.test(table_gender_prison))
+
+cat("\n【种族 vs 是否有前科】\n")
+table_race_prison <- table(df$race, df$`prior.prison.record.0.1.`)
+print(chisq.test(table_race_prison))
+fisher.test(table_gender_prison)
+fisher.test(table_race_prison)
+
+```
+
+
+##  6.结果分析
+```{r}
+
+# 创建结果数据框
+results <- data.frame(
+  "变量对" = c("性别 vs 执行死刑", "种族 vs 执行死刑", "县份 vs 执行死刑", "前科 vs 执行死刑",
+             "性别 vs 是否有前科", "种族 vs 是否有前科"),
+  "卡方值" = c(1042.3, 258.54, 3884, 0.14186, 12.113, 0.084009),
+  "自由度" = c(2, 3, 92, 1, 2, 3),
+  "p值" = c("<2.2e-16", "<2.2e-16", "<2.2e-16", 0.7064, 0.002343, 0.9937),
+  "结论" = c(
+    "极显著，性别与执行死刑相关",
+    "极显著，种族与执行死刑相关",
+    "极显著，县份与执行死刑相关",
+    "不显著，前科与执行死刑无关联",
+    "显著，性别与是否有前科相关",
+    "不显著，种族与是否有前科无关联"
+  )
+)
+
+# 打印结果表
+print(results)
+
+```
+## 7.结果解读
+4. 结果解读与讨论
+4.1 性别、种族、县份与执行死刑的关系
+性别与执行死刑： 卡方值非常高，且p值远小于0.001，说明死刑执行在不同性别间差异显著。可能反映司法判决中存在性别偏差，男性死刑执行率通常较女性高，这与既往研究一致。
+
+种族与执行死刑： 同样呈极显著差异，提示司法判决结果受种族因素影响，某些种族群体可能面临更高死刑风险。这需要结合社会经济、法律环境深入剖析。
+
+县份与执行死刑： 结果显示地域差异极其显著，县级单位间死刑执行存在巨大差异，反映司法实践的地方性差异可能由地方政策、执法力度和社会文化差异驱动。
+
+4.2 前科与执行死刑的关系
+前科与是否执行死刑无显著关联（p=0.7064），表明死刑执行判决对前科情况并未表现出统计上的区分度，司法决策可能更看重案件本身性质而非被告历史记录。
+
+4.3 性别与是否有前科的关系
+性别与是否有前科的关系显著（p=0.00234），结合Fisher精确检验确认，说明男性和女性在前科分布上存在差异，男性通常有更高的前科率，这与社会行为模式和执法差异有关。
+
+4.4 种族与是否有前科的关系
+种族与是否有前科无显著关联（p=0.9937），提示数据中不同种族的前科情况分布相似，无明显差异。
+
+## 8. 结论与建议
+司法公平性关注点： 本研究发现性别、种族和地域因素与死刑执行存在强烈统计相关性，反映出司法判决中可能存在结构性差异或偏差，应加强司法透明度与公正监督。
+
+前科影响有限： 前科记录并非死刑执行判决的重要因素，建议司法机关重点关注案件事实和证据本身，避免历史记录产生不公平影响。
+
+后续研究建议： 建议结合多变量回归模型，控制其他潜在混杂变量，进一步验证上述影响因素。同时，关注法律政策、社会经济背景对地区差异的作用，开展定性研究以补充量化结论。
+
+
