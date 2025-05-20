@@ -84,7 +84,8 @@ c2 = (
         title_opts=opts.TitleOpts(
             title="美国各州死刑执行次数分布 (1812 - 2002)",
             subtitle="数据来源：executions - to - 2002.csv",
-            pos_left="center"
+            pos_left="center",
+            pos_top="5%"  # 调整标题的垂直位置，向下移动
         ),
         visualmap_opts=opts.VisualMapOpts(
             is_piecewise=True,
