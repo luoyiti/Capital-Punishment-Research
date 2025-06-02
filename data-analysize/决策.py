@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score, confusion_matrix, classification_report
 import re
@@ -15,28 +15,15 @@ plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC", "Ari
 plt.rcParams["axes.unicode_minus"] = False  # 解决负号显示问题
 
 # 数据加载和预处理部分
-try:
-    # 加载标注的部分遗言数据
-    labeled_data = pd.read_csv("C:/Users/tpj/Desktop/决策树/last_words_sampled_rows.csv")
-    
-    # 加载完整的遗言数据
-    full_data = pd.read_csv("C:/Users/tpj/Desktop/决策树/raw_last_statement.csv")
-    
-    print(f"已加载标注数据: {len(labeled_data)} 条记录")
-    print(f"已加载完整数据: {len(full_data)} 条记录")
-except Exception as e:
-    print(f"数据加载错误: {e}")
-    # 为了代码演示，创建模拟数据
-    print("使用模拟数据进行演示...")
-    np.random.seed(42)
-    labeled_data = pd.DataFrame({
-        'last.statement': [f"text_{i}" for i in range(100)],
-        'label-penitence': np.random.uniform(0, 10, 100)
-    })
-    full_data = pd.DataFrame({
-        'last_statement': [f"full_text_{i}" for i in range(500)],
-        'other_columns': np.random.randint(0, 100, 500)
-    })
+# 加载标注的部分遗言数据
+labeled_data = pd.read_csv("data/last_words_sampled_rows.csv")
+
+# 加载完整的遗言数据
+full_data = pd.read_csv("data/raw_last_statement.csv")
+
+print(f"已加载标注数据: {len(labeled_data)} 条记录")
+print(f"已加载完整数据: {len(full_data)} 条记录")
+
 
 # 数据预处理函数
 def preprocess_text(text):
@@ -65,8 +52,19 @@ vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(labeled_data['last.statement'])
 y = labeled_data['label-penitence']
 
+
 # 划分训练集和测试集
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 将回归问题转化为分类问题
+def map_to_category(value):
+    if value <= 0.5:
+        return '不悔过'
+    else:
+        return '悔过'
+
+# 将真实值和预测值转换为类别
+y_test_categories = y_test.apply(map_to_category)
 
 # 定义决策树参数搜索范围
 param_grid = {
@@ -75,7 +73,7 @@ param_grid = {
     'min_samples_leaf': [1, 2, 4]
 }
 
-grid_search = GridSearchCV(DecisionTreeRegressor(random_state=42), param_grid, cv=5)
+grid_search = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=5)
 grid_search.fit(X_train, y_train)
 
 # 获取最佳模型
@@ -84,21 +82,12 @@ best_model = grid_search.best_estimator_
 # 在测试集上进行预测
 y_pred = best_model.predict(X_test)
 
+
 # 计算回归评估指标
 mse = mean_squared_error(y_test, y_pred)
 rmse = np.sqrt(mse)
 r2 = r2_score(y_test, y_pred)
 
-# 将回归问题转化为分类问题
-def map_to_category(value):
-    """将悔悟程度值映射到分类等级"""
-    if value < 0.5:
-        return '不悔过'
-    else:
-        return '悔过'
-
-# 将真实值和预测值转换为类别
-y_test_categories = y_test.apply(map_to_category)
 y_pred_categories = pd.Series(y_pred).apply(map_to_category)
 
 # 计算混淆矩阵
@@ -117,9 +106,6 @@ full_predictions = [round(pred, 1) for pred in best_model.predict(full_X)]
 full_data['predicted_penitence'] = full_predictions
 full_data['predicted_category'] = pd.Series(full_predictions).apply(map_to_category)
 
-# 保存结果
-csv_path = "C:/Users/tpj/Desktop/决策树/raw_last_statement_with_predictions.csv"
-full_data.to_csv(csv_path, index=False)
 
 # 可视化部分
 
@@ -138,7 +124,7 @@ plt.show()
 # 2. 绘制决策树（简化版，避免过深的树）
 plt.figure(figsize=(20, 10))
 # 限制树的深度以便于可视化
-simplified_tree = DecisionTreeRegressor(max_depth=3, random_state=42)
+simplified_tree = DecisionTreeClassifier(max_depth=3, random_state=42)
 simplified_tree.fit(X_train, y_train)
 plot_tree(simplified_tree, 
           feature_names=vectorizer.get_feature_names_out(),  
