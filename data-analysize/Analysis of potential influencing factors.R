@@ -15,10 +15,71 @@ unique_states <- unique(df$Jurisdiction)
 print(unique_states)
 
 # 创建政治倾向数据（示例）
-political_affiliation <- tibble(
-  Jurisdiction = c("Texas", "California", "Florida", "Pennsylvania", "Ohio"),
-  Political_Party = c("Republican", "Democratic", "Republican", "Democratic", "Republican")
+#political_affiliation <- tibble(
+#  Jurisdiction = c("Texas", "California", "Florida", "Pennsylvania", "Ohio"),
+#  Political_Party = c("Republican", "Democratic", "Republican", "Democratic", "Republican")
+#)
+
+# 定义所有州及其政治倾向（2020年大选结果 + 历史趋势）
+political_affiliation <- tibble::tribble(
+  ~Jurisdiction,          ~Political_Party,
+  #------------------------|-----------------
+  "Alabama",              "Republican",
+  "Alaska",               "Republican",
+  "Arizona",              "Democratic",  # 2020年翻蓝
+  "Arkansas",             "Republican",
+  "California",           "Democratic",
+  "Colorado",             "Democratic",
+  "Connecticut",          "Democratic",
+  "Delaware",             "Democratic",
+  "Florida",              "Republican",
+  "Georgia",              "Democratic",  # 2020年翻蓝
+  "Hawaii",               "Democratic",
+  "Idaho",                "Republican",
+  "Illinois",             "Democratic",
+  "Indiana",              "Republican",
+  "Iowa",                 "Republican",
+  "Kansas",               "Republican",
+  "Kentucky",             "Republican",
+  "Louisiana",            "Republican",
+  "Maine",                "Democratic",
+  "Maryland",             "Democratic",
+  "Massachusetts",        "Democratic",
+  "Michigan",             "Democratic",
+  "Minnesota",            "Democratic",
+  "Mississippi",          "Republican",
+  "Missouri",             "Republican",
+  "Montana",              "Republican",
+  "Nebraska",             "Republican",
+  "Nevada",               "Democratic",
+  "New Hampshire",        "Democratic",
+  "New Jersey",           "Democratic",
+  "New Mexico",           "Democratic",
+  "New York",             "Democratic",
+  "North Carolina",       "Republican",
+  "North Dakota",         "Republican",
+  "Ohio",                 "Republican",
+  "Oklahoma",             "Republican",
+  "Oregon",               "Democratic",
+  "Pennsylvania",         "Democratic",  # 2020年翻蓝
+  "Rhode Island",         "Democratic",
+  "South Carolina",       "Republican",
+  "South Dakota",         "Republican",
+  "Tennessee",            "Republican",
+  "Texas",                "Republican",
+  "Utah",                 "Republican",
+  "Vermont",              "Democratic",
+  "Virginia",             "Democratic",
+  "Washington",           "Democratic",
+  "West Virginia",        "Republican",
+  "Wisconsin",            "Democratic",
+  "Wyoming",              "Republican",
+  "District of Columbia", "Democratic"   # 华盛顿特区
 )
+
+# 检查是否有遗漏的州
+all_states <- datasets::state.name
+setdiff(all_states, political_affiliation$Jurisdiction)  # 应返回空
 
 # 合并到主数据集
 df <- df %>%
@@ -76,5 +137,6 @@ ggplot(top_states, aes(x = reorder(Jurisdiction, Execution_Count), y = Execution
 # 卡方检验（党派与死刑执行）
 chisq_test <- chisq.test(table(df$Political_Party))
 print(chisq_test)
+
 
 
