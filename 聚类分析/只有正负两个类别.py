@@ -31,6 +31,7 @@ def preprocess_text(text):
     words = jieba.lcut(text)
     # 词性标注，保留形容词、副词等可能体现情感的词性
     import jieba.posseg as pseg
+    # 过滤掉停用词，并保留形容词（a）、副形词（ad）、副词（d）
     words = [word for word, flag in pseg.lcut(text) if flag in ['a', 'ad', 'd'] or word not in stopwords]
     return " ".join(words)
 
