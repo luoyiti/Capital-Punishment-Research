@@ -34,7 +34,7 @@ a data analysis program based on capital punishment datasets.
   - 聚类分析
     - cluster-analysize
   - 假设检验
-    - hypothesis testing
+    - Analysis of potential influencing factors.R
   - 对死刑犯遗言数据的机器学习分析与总体分析
     - decision_tree_model.ipynb
     - tree.py
